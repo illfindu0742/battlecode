@@ -1,0 +1,6 @@
+.venv/
+.cache/
+debug.html
+occupancy.csv
+__pycache__/
+*.pyc
