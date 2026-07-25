@@ -21,32 +21,36 @@ Given the CSV you download from Squarespace (**Orders → Export**), it:
 The output is a new `.xlsx` next to your CSV — your original file is never
 changed.
 
-## First-time setup (once per computer)
+## The easy way: double-click (no typing)
 
-You need Python 3 installed (already on most Macs; on Windows, get it from
-[python.org](https://www.python.org/downloads/) and check "Add to PATH").
+Keep all these files together in one folder. Then just:
 
-Then, in a terminal, from this folder:
+- **Mac:** double-click **`Format Orders (Mac).command`**
+- **Windows:** double-click **`Format Orders (Windows).bat`**
+
+A window pops up asking you to pick your Squarespace CSV. Choose it, and a
+formatted `..._formatted.xlsx` appears next to it and opens in Excel. That's it.
+
+You can also **drag your CSV straight onto the launcher icon** to skip the
+picker.
+
+> The very first time, it quietly installs one small helper (`openpyxl`).
+> If a launcher says Python isn't installed, get it from
+> [python.org](https://www.python.org/downloads/) — on Windows, tick
+> **"Add python.exe to PATH"** during install — then double-click again.
+>
+> On Mac, the first double-click may warn that it's from an unidentified
+> developer: **right-click → Open → Open** once, and it's trusted after that.
+
+## The manual way (terminal)
+
+First time, from this folder: `pip install -r requirements.txt`
+(use `pip3` / `python3` on some Macs). Then:
 
 ```bash
-pip install -r requirements.txt
+python format_orders.py orders.csv                 # -> orders_formatted.xlsx
+python format_orders.py orders.csv packing.xlsx    # choose the output name
 ```
-
-## Every time you want to format an export
-
-```bash
-python format_orders.py orders.csv
-```
-
-That writes `orders_formatted.xlsx` in the same folder. To choose the output
-name yourself:
-
-```bash
-python format_orders.py orders.csv packing-list.xlsx
-```
-
-> On some Macs the commands are `pip3` and `python3` instead of `pip` and
-> `python`.
 
 ## A note on privacy
 
