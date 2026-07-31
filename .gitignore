@@ -1,6 +1,7 @@
 .venv/
-.cache/
-debug.html
-occupancy.csv
 __pycache__/
 *.pyc
+
+# Order data contains customer PII -- never commit it.
+*.csv
+*.xlsx

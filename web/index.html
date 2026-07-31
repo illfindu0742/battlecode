@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Format Squarespace Orders</title>
+<style>
+  :root {
+    --bg: #F4F6F9; --surface: #FFFFFF; --ink: #1E2632; --muted: #66707E;
+    --line: #E3E6EC; --slate: #44546A; --accent: #1B7A61; --accent-soft: #E4F1EC;
+    --accent-line: #A9D6C7; --warn: #B23A2E; --warn-soft: #F8E6E3; --warn-line: #E6B5AE;
+    --drop: #EDF2F0;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11141A; --surface: #1A1F28; --ink: #E7EAF1; --muted: #98A2B1;
+      --line: #2A313D; --slate: #64789A; --accent: #55C6A4; --accent-soft: #163329;
+      --accent-line: #2C5C4E; --warn: #E68374; --warn-soft: #38201C; --warn-line: #5A342D;
+      --drop: #1E2A26;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+    display: flex; justify-content: center; padding: clamp(20px, 5vw, 56px) 16px;
+  }
+  .card {
+    width: 100%; max-width: 560px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 16px; padding: clamp(24px, 4vw, 36px);
+    box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 18px 40px -28px rgba(0,0,0,.35);
+  }
+  .eyebrow { font-size: 12px; letter-spacing: .13em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin: 0 0 8px; }
+  h1 { font-size: clamp(22px, 4vw, 28px); margin: 0 0 8px; letter-spacing: -.02em; }
+  .lede { margin: 0 0 24px; color: var(--muted); font-size: 15px; }
+  .drop {
+    border: 2px dashed var(--accent-line); background: var(--drop); border-radius: 14px;
+    padding: 34px 20px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); }
+  .drop .big { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .drop .small { font-size: 13px; color: var(--muted); margin: 0; }
+  .drop .icon { font-size: 30px; display: block; margin-bottom: 10px; }
+  input[type=file] { display: none; }
+  .status { margin-top: 20px; font-size: 14.5px; }
+  .ok { background: var(--accent-soft); border: 1px solid var(--accent-line); color: var(--ink); border-radius: 11px; padding: 14px 16px; }
+  .ok b { color: var(--accent); }
+  .err { background: var(--warn-soft); border: 1px solid var(--warn-line); color: var(--ink); border-radius: 11px; padding: 14px 16px; }
+  .err b { color: var(--warn); }
+  .btn {
+    display: inline-block; margin-top: 12px; font: inherit; font-size: 14px; font-weight: 600;
+    color: #fff; background: var(--accent); border: none; border-radius: 9px; padding: 10px 16px; cursor: pointer;
+  }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .steps { margin: 26px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
+  .steps h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 0 0 10px; }
+  .steps ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 13.5px; }
+  .steps li { margin: 3px 0; }
+  .priv { margin-top: 16px; font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; }
+  .priv .lock { flex: none; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <p class="eyebrow">Squarespace → Excel</p>
+    <h1>Format your orders</h1>
+    <p class="lede">Drop the orders file you exported from Squarespace and get back a clean, grouped Excel packing list.</p>
+
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop your orders CSV">
+      <span class="icon" aria-hidden="true">📄</span>
+      <p class="big">Drop your orders CSV here</p>
+      <p class="small">…or click to choose the file</p>
+    </div>
+    <input type="file" id="file" accept=".csv,text/csv" />
+
+    <div class="status" id="status" hidden></div>
+
+    <div class="steps">
+      <h2>What it does</h2>
+      <ol>
+        <li>Fills the customer name onto every line of a multi-item order</li>
+        <li>Groups each customer's rows together (repeat buyers too)</li>
+        <li>Keeps just Order ID, quantity, item, variant, and shipping name</li>
+        <li>Centers everything and formats it, ready to print</li>
+      </ol>
+    </div>
+    <p class="priv"><span class="lock" aria-hidden="true">🔒</span><span>Runs entirely in your browser — your order data never leaves this computer.</span></p>
+  </main>
+
+  <script src="exceljs.min.js"></script>
+  <script src="format-core.js"></script>
+  <script>
+    (function () {
+      var drop = document.getElementById("drop");
+      var fileInput = document.getElementById("file");
+      var statusEl = document.getElementById("status");
+      var lastBlobUrl = null;
+
+      function setStatus(html, cls) {
+        statusEl.hidden = false;
+        statusEl.className = "status";
+        statusEl.innerHTML = '<div class="' + cls + '">' + html + "</div>";
+      }
+
+      function baseName(name) {
+        return name.replace(/\.[^.]+$/, "");
+      }
+
+      function triggerDownload(blob, filename) {
+        if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+        lastBlobUrl = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = lastBlobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+
+      function handleFile(file) {
+        if (!file) return;
+        setStatus("Working on <b>" + file.name + "</b>…", "ok");
+        var reader = new FileReader();
+        reader.onload = function () {
+          try {
+            var matrix = OrderFormatter.parseCSV(String(reader.result));
+            var result = OrderFormatter.transform(matrix);
+            var outName = baseName(file.name) + "_formatted.xlsx";
+            OrderFormatter.buildWorkbook(ExcelJS, result).xlsx.writeBuffer().then(function (buf) {
+              var blob = new Blob([buf], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              });
+              triggerDownload(blob, outName);
+              setStatus(
+                "Done — <b>" + result.lineItems + "</b> line items from <b>" +
+                  result.customers + "</b> customers." +
+                  '<br><button class="btn" id="again">Download again</button>',
+                "ok"
+              );
+              document.getElementById("again").onclick = function () {
+                triggerDownload(blob, outName);
+              };
+            }).catch(function (e) {
+              setStatus("<b>Couldn't build the Excel file.</b><br>" + (e && e.message ? e.message : e), "err");
+            });
+          } catch (e) {
+            setStatus("<b>" + (e && e.message ? e.message : e) + "</b>", "err");
+          }
+        };
+        reader.onerror = function () { setStatus("<b>Couldn't read that file.</b>", "err"); };
+        reader.readAsText(file);
+      }
+
+      drop.addEventListener("click", function () { fileInput.click(); });
+      drop.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
+      });
+      fileInput.addEventListener("change", function () {
+        if (fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+      });
+      ["dragenter", "dragover"].forEach(function (ev) {
+        drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); });
+      });
+      ["dragleave", "drop"].forEach(function (ev) {
+        drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); });
+      });
+      drop.addEventListener("drop", function (e) {
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) handleFile(f);
+      });
+    })();
+  </script>
+</body>
+</html>
